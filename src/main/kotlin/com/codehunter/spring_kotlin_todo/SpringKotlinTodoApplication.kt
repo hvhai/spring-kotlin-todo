@@ -1,10 +1,13 @@
 package com.codehunter.spring_kotlin_todo
 
+import jakarta.annotation.PostConstruct
 import jakarta.persistence.*
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.core.env.Environment
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
@@ -16,7 +19,26 @@ import org.springframework.web.bind.annotation.*
 import org.springframework.web.bind.annotation.ExceptionHandler
 
 @SpringBootApplication
-class SpringKotlinTodoApplication
+class SpringKotlinTodoApplication {
+    @Autowired
+    lateinit var environment: Environment
+
+    @PostConstruct
+    fun printConfigProperties() {
+         var propertyKeys = listOf<String>(
+                "management.endpoints.web.exposure.include",
+        "management.endpoint.env.show-values",
+        "management.tracing.sampling.probability",
+        "management.tracing.enabled",
+        "management.zipkin.tracing.endpoint",
+        "spring.datasource.url",
+        "spring.h2.console.enabled",
+        "spring.h2.console.path",
+        "spring.h2.console.settings.web-allow-others"
+        );
+        propertyKeys.forEach { println(" $it  = ${environment.getProperty(it)}") }
+    }
+}
 
 @Entity
 @Table(name = "todo")
@@ -26,9 +48,10 @@ data class TodoEntity(
 )
 
 
-class Todo(
+data class Todo(
     val id: String,
-    var note: String, var isDone: Boolean = false
+    var note: String,
+    var isDone: Boolean = false
 ) {
     fun markDone(): Todo {
         this.isDone = true
