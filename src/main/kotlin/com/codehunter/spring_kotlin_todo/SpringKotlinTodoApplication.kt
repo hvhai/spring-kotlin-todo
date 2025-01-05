@@ -1,6 +1,7 @@
 package com.codehunter.spring_kotlin_todo
 
 import jakarta.persistence.*
+import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.ExceptionHandler
 
 @SpringBootApplication
 class SpringKotlinTodoApplication
@@ -39,6 +41,8 @@ class Todo(
     }
 }
 
+data class IdNotFoundException(override val message: String) : Exception(message)
+
 fun TodoEntity.toDomain(): Todo = Todo(id ?: throw IllegalArgumentException("is is null"), note, isDone)
 fun Todo.toEntity(): TodoEntity = TodoEntity(id, note, isDone)
 
@@ -55,19 +59,19 @@ class TodoManager(private val todoRepository: TodoRepository) {
     }
 
     fun getNote(id: String): Todo {
-        val todoEntity = todoRepository.findByIdOrNull(id) ?: throw Exception("Todo with $id notfound")
+        val todoEntity = todoRepository.findByIdOrNull(id) ?: throw IdNotFoundException("Todo with $id notfound")
         return todoEntity.toDomain()
     }
 
     fun getAllNote() = todoRepository.findAll().map { it.toDomain() }
     fun updateNote(id: String, newNote: String): Todo {
-        val oldNote = todoRepository.findByIdOrNull(id) ?: throw Exception("Todo with $id notfound")
+        val oldNote = todoRepository.findByIdOrNull(id) ?: throw IdNotFoundException("Todo with $id notfound")
         val updatedNote = oldNote.toDomain().updateNote(newNote)
         return todoRepository.save<TodoEntity>(updatedNote.toEntity()).toDomain()
     }
 
     fun markAsDone(id: String): Todo {
-        val oldNote = todoRepository.findByIdOrNull(id) ?: throw Exception("Todo with $id notfound")
+        val oldNote = todoRepository.findByIdOrNull(id) ?: throw IdNotFoundException("Todo with $id notfound")
         val updatedNote = oldNote.toDomain().markDone()
         return todoRepository.save<TodoEntity>(updatedNote.toEntity()).toDomain()
     }
@@ -121,6 +125,23 @@ class TodoController(private val todoManager: TodoManager) {
         todoManager.deleteNote(id)
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build<HttpStatus>()
     }
+}
+
+data class ErrorInfo(val url: String, val error: String)
+
+@ControllerAdvice
+class ExceptionHandler() {
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(IdNotFoundException::class)
+    @ResponseBody
+    fun handleNotFound(request: HttpServletRequest, exception: Exception) =
+        ErrorInfo(request.requestURL.toString(), exception.message ?: "Not found")
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(IllegalArgumentException::class)
+    @ResponseBody
+    fun handleIllegalArgumentException(request: HttpServletRequest, exception: Exception) =
+        ErrorInfo(request.requestURL.toString(), exception.message ?: "Invalid request argument")
 }
 
 
