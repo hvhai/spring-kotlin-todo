@@ -20,12 +20,17 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	// web
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	runtimeOnly("com.h2database:h2")
+
+	// db
+	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("com.mysql:mysql-connector-j")
+	runtimeOnly("com.h2database:h2")
+
+	// testing
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
 		exclude(module="mockito-core")
 	}

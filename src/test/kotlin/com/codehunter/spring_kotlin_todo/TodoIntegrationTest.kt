@@ -76,8 +76,8 @@ class TodoIntegrationTest : ContainerBaseTest() {
 
         val newTodo = actual.body?.data
         assertNotNull(newTodo?.id)
-        assertEquals("new note", newTodo.note)
-        assertFalse(newTodo.isDone)
+        assertEquals("new note", newTodo!!.note)
+        assertFalse(newTodo!!.isDone)
 
         // verify database
         val allNotes = todoRepository.findAll()
@@ -133,7 +133,7 @@ class TodoIntegrationTest : ContainerBaseTest() {
         assertNotNull(actual)
         assertEquals(HttpStatusCode.valueOf(200), actual.statusCode)
         val newTodo = actual.body?.data
-        assertEquals(notes.map { it.toDomain() }, newTodo)
+        assertEquals(notes.map { it.toDomain() }.sortedBy { it.note }, newTodo)
     }
 
     @Test
