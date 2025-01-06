@@ -1,5 +1,6 @@
 package com.codehunter.spring_kotlin_todo
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.annotation.PostConstruct
 import jakarta.persistence.*
 import jakarta.servlet.http.HttpServletRequest
@@ -25,16 +26,16 @@ class SpringKotlinTodoApplication {
 
     @PostConstruct
     fun printConfigProperties() {
-         var propertyKeys = listOf<String>(
-                "management.endpoints.web.exposure.include",
-        "management.endpoint.env.show-values",
-        "management.tracing.sampling.probability",
-        "management.tracing.enabled",
-        "management.zipkin.tracing.endpoint",
-        "spring.datasource.url",
-        "spring.h2.console.enabled",
-        "spring.h2.console.path",
-        "spring.h2.console.settings.web-allow-others"
+        var propertyKeys = listOf<String>(
+            "management.endpoints.web.exposure.include",
+            "management.endpoint.env.show-values",
+            "management.tracing.sampling.probability",
+            "management.tracing.enabled",
+            "management.zipkin.tracing.endpoint",
+            "spring.datasource.url",
+            "spring.h2.console.enabled",
+            "spring.h2.console.path",
+            "spring.h2.console.settings.web-allow-others"
         );
         propertyKeys.forEach { println(" $it  = ${environment.getProperty(it)}") }
     }
@@ -64,10 +65,27 @@ data class Todo(
     }
 }
 
+data class ResponseDTO<T>(
+    val data: T?,
+    @JsonProperty("errors")
+    val errorInfo: ErrorInfo?
+)
+
+data class TodoDTO(
+    val id: String,
+    val note: String,
+    val isDone: Boolean
+)
+
+data class CreateNoteRequest(val note: String)
+data class UpdateNoteRequest(val id: String, val note: String)
 data class IdNotFoundException(override val message: String) : Exception(message)
+data class ErrorInfo(val url: String, val error: String)
 
 fun TodoEntity.toDomain(): Todo = Todo(id ?: throw IllegalArgumentException("is is null"), note, isDone)
 fun Todo.toEntity(): TodoEntity = TodoEntity(id, note, isDone)
+fun Todo.toDTO(): TodoDTO = TodoDTO(id, note, isDone)
+
 
 @Repository
 interface TodoRepository : JpaRepository<TodoEntity, String>
@@ -104,8 +122,6 @@ class TodoManager(private val todoRepository: TodoRepository) {
     }
 }
 
-data class CreateNoteRequest(val note: String)
-data class UpdateNoteRequest(val id: String, val note: String)
 
 @RestController
 @RequestMapping("/api/todos")
@@ -113,33 +129,37 @@ class TodoController(private val todoManager: TodoManager) {
     val logger = LoggerFactory.getLogger(this::class.java)
 
     @PostMapping
-    fun createNote(@RequestBody body: CreateNoteRequest): ResponseEntity<Todo> {
+    fun createNote(@RequestBody body: CreateNoteRequest): ResponseEntity<ResponseDTO<Todo>> {
         logger.info("Create new note")
-        return ResponseEntity(todoManager.createNewNote(body.note), HttpStatus.CREATED)
+        return ResponseEntity(ResponseDTO(todoManager.createNewNote(body.note), null), HttpStatus.CREATED)
     }
 
     @GetMapping
-    fun getAllNote(): ResponseEntity<List<Todo>> {
+    fun getAllNote(): ResponseEntity<ResponseDTO<List<Todo>>> {
         logger.info("Get all note")
-        return ResponseEntity(todoManager.getAllNote(), HttpStatus.OK)
+        return ResponseEntity(ResponseDTO(data = todoManager.getAllNote(), errorInfo = null), HttpStatus.OK)
     }
 
     @GetMapping("/{id}")
-    fun getNote(@PathVariable id: String): ResponseEntity<Todo> {
+    fun getNote(@PathVariable id: String): ResponseEntity<ResponseDTO<Todo>> {
         logger.info("Get note with id=$id")
-        return ResponseEntity(todoManager.getNote(id), HttpStatus.OK)
+        val response: ResponseDTO<Todo> = ResponseDTO(data = todoManager.getNote(id), errorInfo = null)
+        return ResponseEntity<ResponseDTO<Todo>>(response, HttpStatus.OK)
     }
 
     @PatchMapping
-    fun updateNote(@RequestBody body: UpdateNoteRequest): ResponseEntity<Todo> {
+    fun updateNote(@RequestBody body: UpdateNoteRequest): ResponseEntity<ResponseDTO<Todo>> {
         logger.info("Update note with id=${body.id}")
-        return ResponseEntity(todoManager.updateNote(body.id, body.note), HttpStatus.OK)
+        return ResponseEntity(
+            ResponseDTO(data = todoManager.updateNote(body.id, body.note), errorInfo = null),
+            HttpStatus.OK
+        )
     }
 
-    @PatchMapping("/{id}")
-    fun markNoteAsDone(@PathVariable id: String): ResponseEntity<Todo> {
+    @PatchMapping("/{id}/done")
+    fun markNoteAsDone(@PathVariable id: String): ResponseEntity<ResponseDTO<Todo>> {
         logger.info("Mark note with id=$id as done")
-        return ResponseEntity(todoManager.markAsDone(id), HttpStatus.OK)
+        return ResponseEntity(ResponseDTO(data = todoManager.markAsDone(id), errorInfo = null), HttpStatus.OK)
     }
 
     @DeleteMapping("/{id}")
@@ -150,7 +170,6 @@ class TodoController(private val todoManager: TodoManager) {
     }
 }
 
-data class ErrorInfo(val url: String, val error: String)
 
 @ControllerAdvice
 class ExceptionHandler() {
