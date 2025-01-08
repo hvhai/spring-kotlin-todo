@@ -2,22 +2,20 @@ package com.codehunter.spring_kotlin_todo
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.annotation.PostConstruct
-import jakarta.persistence.*
 import jakarta.servlet.http.HttpServletRequest
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.core.env.Environment
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Repository
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.ResponseBody
+import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.servlet.config.annotation.CorsRegistry
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @SpringBootApplication
 class SpringKotlinTodoApplication {
@@ -39,7 +37,24 @@ class SpringKotlinTodoApplication {
         );
         propertyKeys.forEach { println(" $it  = ${environment.getProperty(it)}") }
     }
+
+
 }
+
+@Configuration
+class WebConfig : WebMvcConfigurer {
+    @Bean
+    fun corsConfigurer(): WebMvcConfigurer {
+        return object : WebMvcConfigurer {
+            override fun addCorsMappings(registry: CorsRegistry) {
+                registry.addMapping("/**")
+                    .allowedOrigins("*")
+                    .allowedMethods("*")
+            }
+        }
+    }
+}
+
 
 data class ResponseDTO<T>(
     val data: T?,
