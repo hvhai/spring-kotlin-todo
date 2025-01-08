@@ -11,7 +11,7 @@ version = "0.0.1-SNAPSHOT"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
@@ -29,6 +29,12 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("com.mysql:mysql-connector-j")
 	runtimeOnly("com.h2database:h2")
+
+	// monitoring
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+	// swagger
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
 
 	// testing
 	testImplementation("org.springframework.boot:spring-boot-starter-test") {
