@@ -10,12 +10,18 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.env.Environment
 import org.springframework.http.HttpStatus
+import org.springframework.security.config.Customizer
+import org.springframework.security.config.annotation.web.builders.HttpSecurity
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
+import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseBody
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+
 
 @SpringBootApplication
 class SpringKotlinTodoApplication {
@@ -24,7 +30,7 @@ class SpringKotlinTodoApplication {
 
     @PostConstruct
     fun printConfigProperties() {
-        var propertyKeys = listOf<String>(
+        val propertyKeys = listOf<String>(
             "management.endpoints.web.exposure.include",
             "management.endpoint.env.show-values",
             "management.tracing.sampling.probability",
@@ -39,6 +45,34 @@ class SpringKotlinTodoApplication {
     }
 
 
+}
+
+@Configuration
+@EnableWebSecurity
+class DirectlyConfiguredJwkSetUri {
+    @Bean
+    @Throws(java.lang.Exception::class)
+    fun filterChain(http: HttpSecurity): SecurityFilterChain {
+        http
+            .authorizeHttpRequests(Customizer {
+                it
+                    .anyRequest().authenticated()
+            })
+            .oauth2ResourceServer { oauth2: OAuth2ResourceServerConfigurer<HttpSecurity?> ->
+                oauth2
+                    .jwt(Customizer {
+                        it
+                            .jwkSetUri("https://dev-codehunter.auth0.com/.well-known/jwks.json")
+                    })
+            }
+            /*
+            If you use Spring MVC’s CORS support, you can omit specifying the CorsConfigurationSource
+            and Spring Security uses the CORS configuration provided to Spring MVC:
+            link: https://docs.spring.io/spring-security/reference/servlet/integrations/cors.html
+             */
+            .cors { }
+        return http.build()
+    }
 }
 
 @Configuration
