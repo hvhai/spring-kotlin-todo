@@ -1,6 +1,9 @@
 package com.codehunter.spring_kotlin_todo.todo
 
 import com.codehunter.spring_kotlin_todo.*
+import com.codehunter.spring_kotlin_todo.todo.internal.Todo
+import com.codehunter.spring_kotlin_todo.todo.internal.TodoEntity
+import com.codehunter.spring_kotlin_todo.todo.internal.TodoRepository
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
@@ -56,7 +59,7 @@ class TodoIntegrationTest : ContainerBaseTest() {
     }
 
     private fun mockAuthenticate(): StubMapping? {
-        val rsaPublicJWK = rsaKey.toPublicJWK();
+        val rsaPublicJWK = rsaKey.toPublicJWK()
         val jwkResponse = "{\"keys\": [" +
                 rsaPublicJWK.toJSONString() +
                 "]}"

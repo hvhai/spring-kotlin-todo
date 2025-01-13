@@ -1,5 +1,7 @@
 package com.codehunter.spring_kotlin_todo.todo
 
+import com.codehunter.spring_kotlin_todo.todo.internal.Todo
+import com.codehunter.spring_kotlin_todo.todo.internal.TodoManager
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
