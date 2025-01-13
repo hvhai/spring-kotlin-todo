@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.bind.annotation.ControllerAdvice
@@ -61,6 +62,7 @@ class DirectlyConfiguredJwkSetUri {
         http
             .authorizeHttpRequests(Customizer {
                 it
+                    .requestMatchers("/h2-console/**").permitAll()
                     .requestMatchers("/actuator/**").permitAll()
                     .anyRequest().authenticated()
             })
@@ -77,6 +79,8 @@ class DirectlyConfiguredJwkSetUri {
             link: https://docs.spring.io/spring-security/reference/servlet/integrations/cors.html
              */
             .cors { }
+            .csrf { it.disable() }
+            .headers { it.frameOptions(HeadersConfigurer<HttpSecurity>.FrameOptionsConfig::disable) }
         return http.build()
     }
 }

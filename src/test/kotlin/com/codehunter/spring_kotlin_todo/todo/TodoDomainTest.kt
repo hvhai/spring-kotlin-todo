@@ -1,9 +1,5 @@
-package com.codehunter.spring_kotlin_todo
+package com.codehunter.spring_kotlin_todo.todo
 
-import com.codehunter.spring_kotlin_todo.todo.Todo
-import com.codehunter.spring_kotlin_todo.todo.TodoEntity
-import com.codehunter.spring_kotlin_todo.todo.TodoManager
-import com.codehunter.spring_kotlin_todo.todo.TodoRepository
 import io.mockk.every
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
