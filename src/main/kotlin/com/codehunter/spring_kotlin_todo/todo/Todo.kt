@@ -1,5 +1,7 @@
-package com.codehunter.spring_kotlin_todo
+package com.codehunter.spring_kotlin_todo.todo
 
+import com.codehunter.spring_kotlin_todo.IdNotFoundException
+import com.codehunter.spring_kotlin_todo.ResponseDTO
 import jakarta.persistence.*
 import org.slf4j.LoggerFactory
 import org.springframework.data.jpa.repository.JpaRepository

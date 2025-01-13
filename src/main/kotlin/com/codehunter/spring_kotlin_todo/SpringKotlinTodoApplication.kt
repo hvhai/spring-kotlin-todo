@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.annotation.PostConstruct
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
@@ -39,7 +40,8 @@ class SpringKotlinTodoApplication {
             "spring.datasource.url",
             "spring.h2.console.enabled",
             "spring.h2.console.path",
-            "spring.h2.console.settings.web-allow-others"
+            "spring.h2.console.settings.web-allow-others",
+            "spring.security.oauth2.resourceserver.jwt.jwk-set-uri"
         );
         propertyKeys.forEach { println(" $it  = ${environment.getProperty(it)}") }
     }
@@ -48,21 +50,25 @@ class SpringKotlinTodoApplication {
 }
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity(debug = false)
 class DirectlyConfiguredJwkSetUri {
+    @Value("\${spring.security.oauth2.resourceserver.jwt.jwk-set-uri}")
+    lateinit var jwkSetUri: String
+
     @Bean
     @Throws(java.lang.Exception::class)
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .authorizeHttpRequests(Customizer {
                 it
+                    .requestMatchers("/actuator/**").permitAll()
                     .anyRequest().authenticated()
             })
             .oauth2ResourceServer { oauth2: OAuth2ResourceServerConfigurer<HttpSecurity?> ->
                 oauth2
                     .jwt(Customizer {
                         it
-                            .jwkSetUri("https://dev-codehunter.auth0.com/.well-known/jwks.json")
+                            .jwkSetUri(jwkSetUri)
                     })
             }
             /*

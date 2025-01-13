@@ -51,6 +51,7 @@ dependencies {
 	testImplementation("org.testcontainers:mysql")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testImplementation("org.springframework.security:spring-security-test")
+	testImplementation("org.wiremock:wiremock-standalone:3.10.0")
 }
 
 kotlin {

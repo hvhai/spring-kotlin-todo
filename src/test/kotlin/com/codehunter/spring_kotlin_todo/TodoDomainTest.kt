@@ -1,5 +1,9 @@
 package com.codehunter.spring_kotlin_todo
 
+import com.codehunter.spring_kotlin_todo.todo.Todo
+import com.codehunter.spring_kotlin_todo.todo.TodoEntity
+import com.codehunter.spring_kotlin_todo.todo.TodoManager
+import com.codehunter.spring_kotlin_todo.todo.TodoRepository
 import io.mockk.every
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
@@ -13,8 +17,8 @@ import kotlin.test.assertNull
 
 @ExtendWith(MockKExtension::class)
 class TodoDomainTest {
-    val todoRepository: TodoRepository = mockk()
-    val todoManager: TodoManager = TodoManager(todoRepository)
+    private val todoRepository: TodoRepository = mockk()
+    private val todoManager: TodoManager = TodoManager(todoRepository)
 
     @Test
     fun `given valid data when create new note should new note return with id`() {
@@ -31,6 +35,6 @@ class TodoDomainTest {
 
         assertNull(requestedTodoEntity.captured.id)
         assertEquals("note", requestedTodoEntity.captured.note)
-        assertFalse { requestedTodoEntity.captured.isDone}
+        assertFalse { requestedTodoEntity.captured.isDone }
     }
 }

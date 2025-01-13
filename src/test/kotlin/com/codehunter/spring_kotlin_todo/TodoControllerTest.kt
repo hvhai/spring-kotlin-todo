@@ -1,5 +1,6 @@
 package com.codehunter.spring_kotlin_todo
 
+import com.codehunter.spring_kotlin_todo.todo.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
@@ -7,12 +8,15 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.MediaType
+import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
 
 @WebMvcTest(TodoController::class)
+@WithMockUser
 class TodoControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val mapper: ObjectMapper) {
     @MockkBean
     lateinit var todoManager: TodoManager
@@ -69,6 +73,7 @@ class TodoControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val mapper:
         mockMvc.post("/api/todos") {
             content = mapper.writeValueAsString(CreateNoteRequest("note"))
             contentType = MediaType.APPLICATION_JSON
+            with(csrf())
         }
             .andExpect { status { isCreated() } }
             .andExpect { content { contentType(MediaType.APPLICATION_JSON) } }
@@ -80,6 +85,7 @@ class TodoControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val mapper:
     }
 
     @Test
+    @WithMockUser
     fun `given existent note when update note by id then return updated note`() {
         // given
         val expectUpdatedNote = Todo("id", "note updated", false)
@@ -89,6 +95,7 @@ class TodoControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val mapper:
         mockMvc.patch("/api/todos") {
             content = mapper.writeValueAsString(UpdateNoteRequest("id", "note updated"))
             contentType = MediaType.APPLICATION_JSON
+            with(csrf())
         }
             .andExpect { status { isOk() } }
             .andExpect { content { contentType(MediaType.APPLICATION_JSON) } }
