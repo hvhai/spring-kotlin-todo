@@ -19,6 +19,8 @@ repositories {
 	mavenCentral()
 }
 
+extra["springModulithVersion"] = "1.3.1"
+
 dependencies {
 	// web
 	implementation("org.springframework.boot:spring-boot-starter-web")
@@ -28,6 +30,10 @@ dependencies {
 	// security
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 	implementation("org.springframework.boot:spring-boot-starter-security")
+
+	// modulith
+	implementation("org.springframework.modulith:spring-modulith-starter-core")
+	implementation("org.springframework.modulith:spring-modulith-starter-jpa")
 
 	// db
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -50,8 +56,18 @@ dependencies {
 	testImplementation("org.testcontainers:junit-jupiter")
 	testImplementation("org.testcontainers:mysql")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
 	testImplementation("org.springframework.security:spring-security-test")
+
 	testImplementation("org.wiremock:wiremock-standalone:3.10.0")
+
+	testImplementation("org.springframework.modulith:spring-modulith-starter-test")
+}
+
+dependencyManagement {
+	imports {
+		mavenBom("org.springframework.modulith:spring-modulith-bom:${property("springModulithVersion")}")
+	}
 }
 
 kotlin {
