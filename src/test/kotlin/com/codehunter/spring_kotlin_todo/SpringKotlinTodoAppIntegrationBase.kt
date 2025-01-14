@@ -1,6 +1,8 @@
 package com.codehunter.spring_kotlin_todo
 
 import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.client.WireMock
+import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.http.Request
 import com.github.tomakehurst.wiremock.http.Response
@@ -18,11 +20,14 @@ import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ApplicationEvent
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.event.ContextClosedEvent
+import org.springframework.core.io.ClassPathResource
+import org.springframework.http.MediaType
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.utility.DockerImageName
+import wiremock.org.apache.commons.io.IOUtils
 import java.util.*
 
 class WiremockInitializer : ApplicationContextInitializer<ConfigurableApplicationContext> {
@@ -51,8 +56,24 @@ class WiremockInitializer : ApplicationContextInitializer<ConfigurableApplicatio
         TestPropertyValues.of(
             mapOf(
                 "spring.security.oauth2.resourceserver.jwt.jwk-set-uri" to "${wiremockServer.baseUrl()}/jwks.json",
+                "spring.security.oauth2.client.provider.spring-auth0-mvc.issuer-uri" to "${wiremockServer.baseUrl()}/",
+                "spring.security.oauth2.client.provider.spring-auth0-mvc.jwk-set-uri" to "${wiremockServer.baseUrl()}/jwks.json",
             )
         ).applyTo(applicationContext)
+
+        val mockResponse = IOUtils.toString(
+            ClassPathResource("auth-server-mock-response/openid-configuration.json").inputStream,
+            "UTF-8"
+        ).replace("https://dev-codehunter.auth0.com", wiremockServer.baseUrl())
+        wiremockServer.stubFor(
+            WireMock.get("/.well-known/openid-configuration")
+                .willReturn(
+                    aResponse()
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                        .withBody(mockResponse)
+                )
+        )
+        log.info("WireMock server started")
     }
 
     fun requestReceived(
@@ -90,7 +111,7 @@ abstract class ContainerBaseTest {
             .expirationTime(Date(Date().time + 60 * 1000))
             .algorithm(Algorithm("RS256"))
             .keyID("1234")
-            .generate();
+            .generate()
         val token = getSignedJwt()
 
         private fun getSignedJwt(): String {

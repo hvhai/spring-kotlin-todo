@@ -10,16 +10,17 @@ import org.testcontainers.junit.jupiter.Testcontainers
 
 @Testcontainers
 @SpringBootTest(
-	classes = arrayOf(SpringKotlinTodoApplication::class),
-	webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+    classes = arrayOf(SpringKotlinTodoApplication::class),
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 @ContextConfiguration(initializers = arrayOf(WiremockInitializer::class))
 @ActiveProfiles("integration")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@Import(TestSecurityConfiguration::class)
 class SpringKotlinTodoApplicationTests : ContainerBaseTest() {
 
-	@Test
-	fun contextLoads() {
-	}
+    @Test
+    fun contextLoads() {
+    }
 
 }

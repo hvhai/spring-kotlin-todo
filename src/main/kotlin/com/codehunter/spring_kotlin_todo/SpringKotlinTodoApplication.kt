@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.annotation.Order
 import org.springframework.core.env.Environment
 import org.springframework.http.HttpStatus
 import org.springframework.security.config.Customizer
@@ -42,8 +43,10 @@ class SpringKotlinTodoApplication {
             "spring.h2.console.enabled",
             "spring.h2.console.path",
             "spring.h2.console.settings.web-allow-others",
-            "spring.security.oauth2.resourceserver.jwt.jwk-set-uri"
-        );
+            "spring.security.oauth2.resourceserver.jwt.jwk-set-uri",
+            "spring.security.oauth2.client.provider.spring-auth0-mvc.issuer-uri",
+            "spring.security.oauth2.client.provider.spring-auth0-mvc.jwk-set-uri",
+        )
         propertyKeys.forEach { println(" $it  = ${environment.getProperty(it)}") }
     }
 
@@ -58,20 +61,26 @@ class DirectlyConfiguredJwkSetUri {
 
     @Bean
     @Throws(java.lang.Exception::class)
+    @Order(0)
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
-            .authorizeHttpRequests(Customizer {
+            .securityMatcher("/api/**")
+            .authorizeHttpRequests({
                 it
-                    .requestMatchers("/h2-console/**").permitAll()
-                    .requestMatchers("/actuator/**").permitAll()
+                    .requestMatchers(
+                        "/h2-console/**", "/actuator/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/swagger-resources/**",
+                        "/webjars/**",
+                        "/v3/**",
+                    )
+                    .permitAll()
                     .anyRequest().authenticated()
             })
             .oauth2ResourceServer { oauth2: OAuth2ResourceServerConfigurer<HttpSecurity?> ->
                 oauth2
-                    .jwt(Customizer {
-                        it
-                            .jwkSetUri(jwkSetUri)
-                    })
+                    .jwt({ it.jwkSetUri(jwkSetUri) })
             }
             /*
             If you use Spring MVC’s CORS support, you can omit specifying the CorsConfigurationSource
@@ -79,6 +88,32 @@ class DirectlyConfiguredJwkSetUri {
             link: https://docs.spring.io/spring-security/reference/servlet/integrations/cors.html
              */
             .cors { }
+            .csrf { it.disable() }
+            .headers { it.frameOptions(HeadersConfigurer<HttpSecurity>.FrameOptionsConfig::disable) }
+        return http.build()
+    }
+
+    @Bean
+    @Throws(java.lang.Exception::class)
+    @Order(1)
+    fun filterChainMvc(http: HttpSecurity): SecurityFilterChain {
+        http
+            .authorizeHttpRequests({
+                it
+                    .requestMatchers(
+                        "/h2-console/**", "/actuator/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/swagger-resources/**",
+                        "/webjars/**",
+                        "/v3/**",
+                        "/api/**"
+                    )
+                    .permitAll()
+                    .anyRequest().authenticated()
+            })
+            .oauth2Login(Customizer.withDefaults())
+            .oauth2ResourceServer { it.disable() }
             .csrf { it.disable() }
             .headers { it.frameOptions(HeadersConfigurer<HttpSecurity>.FrameOptionsConfig::disable) }
         return http.build()
